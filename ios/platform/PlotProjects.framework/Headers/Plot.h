@@ -16,6 +16,7 @@
 #import <UIKit/UIKit.h>
 #import <UserNotifications/UserNotifications.h>
 
+NS_ASSUME_NONNULL_BEGIN
 /** 
  * \memberof Plot
  * Key for userInfo properties in UNNotificationRequests created by Plot.
@@ -66,7 +67,7 @@ extern NSString* const PlotNotificationTrigger;
 
 /**
  * \memberof Plot
- * Type of the region. Either geofence or beacon.
+ * Type of the region. Either geofence, beacon or external.
  */
 extern NSString* const PlotNotificationRegionType;
 
@@ -96,6 +97,12 @@ extern NSString* const PlotNotificationDwellingMinutes;
 
 /**
  * \memberof Plot
+ * Geofence match payload identifier, used in user info.
+ */
+extern NSString* const PlotNotificationMatchPayload;
+
+/**
+ * \memberof Plot
  * Constant for PlotNotificationTrigger, used on enter trigger event.
  */
 extern NSString* const PlotNotificationTriggerEnter;
@@ -117,6 +124,13 @@ extern NSString* const PlotNotificationRegionTypeGeofence;
  * Constant for PlotNotificationRegionType, used on beacon regions.
  */
 extern NSString* const PlotNotificationRegionTypeBeacon;
+
+/**
+ * \memberof Plot
+ * Constant for PlotNotificationRegionType, used on external regions.
+ */
+extern NSString* const PlotNotificationRegionTypeExternal;
+
 
 /**
  * \memberof Plot
@@ -206,6 +220,12 @@ extern NSString* const PlotGeotriggerMatchRange;
 
 /**
  * \memberof Plot
+ * Geotrigger match payload identifier, used in user info.
+ */
+extern NSString* const PlotGeotriggerMatchPayload;
+
+/**
+ * \memberof Plot
  * Constant for PlotGeotriggerTrigger, used on enter trigger event.
  */
 extern NSString* const PlotGeotriggerTriggerEnter; //synonym for PlotNotificationTriggerEnter
@@ -228,6 +248,36 @@ extern NSString* const PlotGeotriggerRegionTypeGeofence;
  */
 extern NSString* const PlotGeotriggerRegionTypeBeacon;
 
+/**
+ * \memberof Plot
+ * Constant for PlotExternalTriggerType, used on external regions.
+ */
+extern NSString* const PlotExternalTriggerTypeEnter;
+
+/**
+ * \memberof Plot
+ * Constant for PlotExternalTriggerType, used on external regions.
+ */
+extern NSString* const PlotExternalTriggerTypeExit;
+
+/**
+ * \memberof Plot
+ * Location update message name, used in NSNotificationCenter.
+ */
+extern NSString* const PlotLocationUpdateMessageName;
+
+/**
+ * \memberof Plot
+ * PlotContext identifier, used in user info.
+ */
+extern NSString* const PlotContextKey;
+
+/**
+ * \memberof Plot
+ * Location identifier, used in user info.
+ */
+extern NSString* const PlotLocationKey;
+
 
 @protocol PlotDelegate;
 
@@ -235,6 +285,9 @@ extern NSString* const PlotGeotriggerRegionTypeBeacon;
  * Represents a notification just before or after sending. You can modify the notification just before it is sent using the Notification Filter.
  */
 @interface PlotFilterNotifications : NSObject
+
+/** Adds entry to match payload, so that payload placeholders are replaced with the appropriate values*/
+-(void)addToMatchPayload:(NSString*)key value:(NSString*)value;
 
 /** All notifications that are within the radius of the geofence. The type of the objects in the array is UNNotificationRequests*.
  */
@@ -272,6 +325,9 @@ extern NSString* const PlotGeotriggerRegionTypeBeacon;
  */
 @interface PlotHandleGeotriggers : NSObject
 
+/** Adds entry to match payload, so that payload placeholders are replaced with the appropriate values*/
+-(void)addToMatchPayload:(NSString*)key value:(NSString*)value;
+
 /** All geotriggers that are within the radius of the geofence. The type of the objects in the array is PlotGeotrigger*.
  */
 @property (strong, nonatomic, readonly) NSArray<PlotGeotrigger*> *geotriggers;
@@ -304,9 +360,9 @@ extern NSString* const PlotGeotriggerRegionTypeBeacon;
 
 /** Optional date when the notification was opened by the user.
  */
-@property (nonatomic, copy, readonly) NSDate* dateOpened;
+@property (nonatomic, copy, readonly) NSDate* _Nullable dateOpened;
 
--(instancetype)initializeWithUserInfo:(NSDictionary*)userInfo dateSent:(NSDate*)dateSent dateOpened:(NSDate*)dateOpened;
+-(instancetype)initializeWithUserInfo:(NSDictionary*)userInfo dateSent:(NSDate*)dateSent dateOpened:(NSDate* _Nullable)dateOpened;
 
 @end
 
@@ -325,15 +381,37 @@ extern NSString* const PlotGeotriggerRegionTypeBeacon;
 
 /** Optional date when the geotrigger was handled by the geotrigger handler.
  */
-@property (nonatomic, copy, readonly) NSDate* dateHandled;
+@property (nonatomic, copy, readonly) NSDate* _Nullable dateHandled;
 
--(instancetype)initializeWithUserInfo:(NSDictionary*)userInfo dateSent:(NSDate*)dateSent dateHandled:(NSDate*)dateHandled;
+-(instancetype)initializeWithUserInfo:(NSDictionary*)userInfo dateSent:(NSDate*)dateSent dateHandled:(NSDate* _Nullable)dateHandled;
 
 @end
+
+@interface PlotLocationWithAccuracy : NSObject
+
+@property (nonatomic, assign) double latitude;
+
+@property (nonatomic, assign) double longitude;
+
+@property (nonatomic, assign) double accuracy;
+
+-(instancetype)initWithLatitude:(double)latitude longitude:(double)longitude accuracy:(double)accuracy;
+
+@end
+
+@class PlotConfiguration;
 
 /** The plot delegate which is used in this plot app.
  */
 @protocol PlotDelegate <NSObject>
+
+@optional
+/** Implement this method if you don't want to treat the data field as an URI and open that URI when a notification is received, but instead you want to provide a custom handler. Keep in
+   mind that notifications set to be an in-app landing page will bypass this handler.
+ * @param data The custom handler.
+ * @param response The received notification response
+ */
+-(void)plotHandleNotification:(NSString*)data response:(UNNotificationResponse*)response;
 
 @optional
 /** Implement this method if you don’t want to treat the data field as an URI and open that URI when a notification is received, but instead you want to provide a custom handler. Keep in mind that notifications set to be an in-app landing page will bypass this handler.
@@ -366,19 +444,19 @@ extern NSString* const PlotGeotriggerRegionTypeBeacon;
 @optional
 -(void)plotNotificationOpenedEvent:(PlotSentNotification*)notification;
 
+@optional
+-(void)plotLoadConfig:(PlotConfiguration*)originalConfig
+       loadWithConfig:(void(^)(PlotConfiguration*))loadWithConfig;
+
 @end
 
 /** All configurations for the plot app.
  */
 @interface PlotConfiguration : NSObject
 
-/** Specify -1 to use the value of previous session. Set to 0 to allow notifications to be sent directly after another notification has been sent. Default is -1.
+/** Use to set your public token.
  */
-@property (assign, nonatomic) int cooldownPeriod;
-
-/** Use to set your publicKey.
- */
-@property (strong, nonatomic) NSString* publicKey;
+@property (strong, nonatomic) NSString* _Nullable publicToken;
 
 /** Delegate used for Plot, use this property for setting.
  */
@@ -392,12 +470,6 @@ extern NSString* const PlotGeotriggerRegionTypeBeacon;
  */
 @property (assign, nonatomic) int maxRegionsMonitored;
 
-/**
- * \deprecated
- * No longer used. Default is YES.
- */
-@property (assign, nonatomic) BOOL enableBackgroundModeWarning __attribute__((deprecated));
-
 /** Automatically ask the user for permission to use the location of the device.
  *  When set to false, you're responsible yourself for asking permission to make use of location.
  */
@@ -408,11 +480,24 @@ extern NSString* const PlotGeotriggerRegionTypeBeacon;
  */
 @property (assign, nonatomic) BOOL automaticallyAskNotificationPermission;
 
-/** Initializes this object with your publicToken and the PlotDelegate.
- * @param publicKey Your public key from plot projects.
- * @param delegate The plot delegate you use.
+/** Enables provisional authorization for "Deliver Quietly" notifications.
+ *  This setting requires "automaticallyAskLocationPermission" to also be set to true.
+ *  When "provisionalNotificationPermission" is set to true and "automaticallyAskLocationPermission" is set to false (or not present),
+ *  the plugin will default to the automatic location services opt-in dialog (as if "automaticallyAskLocationPermission"
+ *  was set to true and "provisionalNotificationPermission" to false).
  */
--(instancetype)initWithPublicKey:(NSString*)publicKey delegate:(id<PlotDelegate>)delegate;
+@property (assign, nonatomic) BOOL provisionalNotificationPermission;
+
+/** Force disable QuickSync functionality. Normally it auto detects. Default is NO.
+  */
+@property (nonatomic, assign) BOOL quickSyncDisabled;
+
+/**
+ *  Enable (default) or disable background location gathering.
+ *  When set to false, region monitoring is disabled and the automaticallyAskLocationPermission
+ *  setting is set to NO.
+ */
+@property (assign, nonatomic) BOOL enableBackgroundLocation;
 
 @end
 
@@ -427,42 +512,12 @@ extern NSString* const PlotGeotriggerRegionTypeBeacon;
 +(void)initialize NS_UNAVAILABLE;
 //@endcond
 
-/**
- * \deprecated
- * Old version of initialization code. When using this method, handling notifications yourself is not supported.
- * @param key Public key from plot projects used to identify your app.
- * @param launchOptions Specific options used on launch, can be used to pass options as user.
- */
-+(void)initializeWithPublicKey:(NSString*)key launchOptions:(NSDictionary *)launchOptions __attribute__((deprecated));
-
-/**
- * \deprecated
- * Before you can make use of the other functionality within Plot, you have to call an initialization method (initializeWithLaunchOptions:delegate: is preferred).
- * Normally you want to call this method inside -(BOOL)application:didFinishLaunchingWithOptions:.
- * When the app is launched because the user tapped on a notification, then that notification will be opened.
- * @param key Public key from plot projects used to identify your app.
- * @param launchOptions Specific options used on launch, can be used to pass options as user.
- * @param delegate Plot delegate used.
- */
-+(void)initializeWithPublicKey:(NSString*)key launchOptions:(NSDictionary *)launchOptions delegate:(id<PlotDelegate>)delegate __attribute__((deprecated));
-
-/**
- * \deprecated
- * Before you can make use of the other functionality within Plot, you have to call an initialization method. The parameters for Plot are passed through a configuration object. Normally you want to call this method inside -(BOOL)application:didFinishLaunchingWithOptions:.
- * When the app is launched because the user tapped on a notification, then that notification will be opened.
- * @param configuration Configuration of the app.
- * @param launchOptions Specific options used on launch, can be used to pass options as user.
- */
-+(void)initializeWithConfiguration:(PlotConfiguration*)configuration launchOptions:(NSDictionary *)launchOptions __attribute__((deprecated));
-
-
 /** 
  * Before you can make use of the other functionality within Plot, you have to call an initialization method (this one is preferred). It will read the configuration from the config file (plotconfig.json), please make sure this file is defined. Normally you want to call this method inside -(BOOL)application:didFinishLaunchingWithOptions:.
  * When the app is launched because the user tapped on a notification, then that notification will be opened.
- * @param launchOptions Specific options used on launch, can be used to pass options as user.
  * @param delegate Plot delegate used.
  */
-+(void)initializeWithLaunchOptions:(NSDictionary *)launchOptions delegate:(id<PlotDelegate>)delegate;
++(void)initializeWithDelegate:(id<PlotDelegate>)delegate;
 
 /** Enables the functionality of the Plot library until disable() is called. When the user hasn’t consented to the use of location services, he will be asked at this point. Even when the device or your app is restarted the Plot library continues to work. The intended use case is to provide users with an opt-in.<br>
  *  <br>
@@ -479,23 +534,9 @@ extern NSString* const PlotGeotriggerRegionTypeBeacon;
  */
 +(void)setCooldownPeriod:(int)secondsCooldown;
 
-/**
- * \deprecated
- * No longer used. Doesn’t do anything.
- * @param enabled Enabled background warning mode.
- */
-+(void)setEnableBackgroundModeWarning:(BOOL)enabled __attribute__((deprecated));
-
 /** Returns whether the library is enabled. Could return NO when the initialization of the library hasn’t completed yet.
  */
 +(BOOL)isEnabled;
-
-/**
- * \deprecated
- * Deprecated way of setting the Plot delegate.
- * @param delegate The plot delegate which is used.
- */
-+(void)setDelegate:(id<PlotDelegate>)delegate __attribute__((deprecated));
 
 /** Returns the current version of the Plot plugin.
  */
@@ -514,7 +555,7 @@ extern NSString* const PlotGeotriggerRegionTypeBeacon;
  * @param value segmentation value
  * @param propertyKey segmentation key
  */
-+(void)setStringSegmentationProperty:(NSString*)value forKey:(NSString*)propertyKey;
++(void)setStringSegmentationProperty:(NSString* _Nullable)value forKey:(NSString*)propertyKey;
 
 /**
  * Sets a property of the user for segmentation. Set value to nil to clear the property.
@@ -609,6 +650,30 @@ extern NSString* const PlotGeotriggerRegionTypeBeacon;
 +(void)sendAttributionEvent:(NSString *)action withItemId:(NSString *)itemId;
 
 /**
+ * Loads the closest contextual page to the users position by using either geofences or beacons.
+ */
++(void)requestContextualPage:(void (^)(NSString* _Nullable result))completionHandler;
+
+/**
+ * Call this method when your external region triggers. You may combine multiple triggers into a
+ * single call. The properties need to exactly match the properties defined in the dashboard for
+ * a trigger to be registered.
+ * @param properties a collection of all the properties maps
+ * @param triggerType what kind of trigger it is
+ */
++(void)externalRegionTrigger:(NSArray<NSDictionary<NSString*,NSString*>*>*)properties triggerType:(NSString*)triggerType;
+
+/**
+ * Call this method when your external region triggers. You may combine multiple triggers into a
+ * single call. The properties need to exactly match the properties defined in the dashboard for
+ * a trigger to be registered.
+ * @param properties a collection of all the properties maps
+ * @param triggerType what kind of trigger it is
+ * @param matchPayload extra information you want to add to this trigger
+ */
++(void)externalRegionTrigger:(NSArray<NSDictionary<NSString*,NSString*>*>*)properties triggerType:(NSString*)triggerType matchPayload:(NSDictionary<NSString*,NSString*>*)matchPayload;
+
+/**
  * Only needed when method swizzling is disabled in the Firebase library and you want to make use of QuickSync. Forward the method with the
  * same name from the AppDelegate to Plot to ensure correct workings.
  */
@@ -634,6 +699,8 @@ extern NSString* const PlotGeotriggerRegionTypeBeacon;
 @interface PlotRelease:  PlotBase
 
 @end
+
+NS_ASSUME_NONNULL_END
 
 #ifdef DEBUG
 
