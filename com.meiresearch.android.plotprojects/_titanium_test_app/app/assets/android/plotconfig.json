@@ -1,9 +1,15 @@
 {
-  "publicToken": "7peHRdkAzkZYHq4J",
+  "publicToken": "yuYjMtqR8vbk4NBK",
   "enableOnFirstRun": true,
   "debug": true,
-  "emulatorTesting": true,
+  "emulatorTesting": false,
   "showOnGoingNotification": "during_network_request",
-  "enableCombinedMonitoring": "false",
-  "geotriggerHandlerEnabled": true
+  "automaticallyAskLocationPermission": true,
+  "enableCombinedMonitoring": true,
+  "geotriggerHandlerEnabled": true,
+  "notificationFilterEnabled": false,
+
+  "enableTransitionRecognition": true,
+  "transitionRecognitionActivities": ["EXIT-VEHICLE", "EXIT-BICYCLE", "EXIT-STILL", "EXIT-WALKING"],
+
 }

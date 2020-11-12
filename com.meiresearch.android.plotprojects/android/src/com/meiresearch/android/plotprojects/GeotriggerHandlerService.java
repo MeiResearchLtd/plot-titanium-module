@@ -20,6 +20,9 @@ import com.plotprojects.retail.android.GeotriggerHandlerUtil.Batch;
 import com.plotprojects.retail.android.Geotrigger;
 import com.plotprojects.retail.android.GeotriggerHandlerBroadcastReceiver;
 
+import org.appcelerator.titanium.TiApplication;
+import org.appcelerator.titanium.TiProperties;
+
 import androidx.core.app.NotificationCompat;
 import android.app.NotificationManager;
 import android.app.NotificationChannel;
@@ -35,6 +38,8 @@ import android.widget.Toast;
 import android.R;
 import java.util.List;
 
+import org.json.*;
+
 public class GeotriggerHandlerService extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         Log.d("GeotriggerHandlerService", "Geofence triggered!");
@@ -48,11 +53,17 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
                 for(int i = 0; i < triggers.size(); i++){
                     t = triggers.get(i);
                     //Log.d("Handled Geotrigger", triggers[i].getGeofenceLatitude(), triggers[i].getGeofenceLongitude(), triggers[i].getName(), triggers[i].getTrigger());
-                    Log.d("Handled Geotrigger", t.getName());//t.getGeofenceLatitude());
+                    Log.d("Handled Geotrigger id", t.getId());
+                    Log.d("Handled Geotrigger name", t.getName());//t.getGeofenceLatitude());
                     //Log.d("    ", t.getGeofenceLongitude());
                     //Log.d("    ", t.getName());
-                    Log.d("    ", t.getTrigger());
+                    Log.d("   getTrigger ", t.getTrigger());
                     Log.d("handled geotrigger", "--end--");
+
+                    Long tsLong = System.currentTimeMillis()/1000;
+                    String ts = tsLong.toString();
+
+                    savePersistentData(ts, t.getName(), t.getId(), t.getTrigger());
 
                     //create notification channel
                     CharSequence name = "plotprojects";
@@ -79,6 +90,46 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
             }
         }
     }
+
+    // save to Ti.app.properties so the Titanium app can access this data later.
+    private static void savePersistentData(String timestamp, String name, String id, String direction){
+        TiProperties props = TiApplication.getInstance().getAppProperties();
+        String propName = "plot.surveyTriggered";
+
+        try{
+            JSONObject jsonObj = new JSONObject();
+            jsonObj.put("detection_timestamp", timestamp);
+            jsonObj.put("geotrigger_id", id);
+            jsonObj.put("geotrigger_name", name);
+            jsonObj.put("geotrigger_direction", direction);
+
+            appendToJsonArray(propName, jsonObj);
+        } catch(JSONException e){
+            Log.e("GeotriggerHandlerService", "error getting notification details");
+            e.printStackTrace();
+        }
+    }
+
+    private static void appendToJsonArray(String propertyName, JSONObject elem){
+        Log.d("GeotriggerHandlerService", "appendToJsonArray start");
+
+        TiProperties props = TiApplication.getInstance().getAppProperties();
+
+        String json = props.getString(propertyName, "[]");
+        JSONArray json_ary = new JSONArray();
+
+        try{
+            json_ary =  new JSONArray(json);
+            json_ary.put(elem);
+
+            props.setString(propertyName, json_ary.toString());
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        Log.d("GeotriggerHandlerService", "appendToJsonArray end");
+    }
+
 
     //This is code that can be adapted so that this broadcastreceiver can be managed from titanium.
     //Previously this was a service and not a broadcast receiver, so onStartCommand is irrelevant for instance.
