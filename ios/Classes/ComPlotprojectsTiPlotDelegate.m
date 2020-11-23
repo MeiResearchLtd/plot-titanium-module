@@ -195,64 +195,86 @@
                 trigger_direction = @"exit";
             }
 
-            NSUserDefaults *standardUserDefaults = [NSUserDefaults standardUserDefaults];
-            NSString *notTitle;
-            NSString *notText;
-            NSTimeInterval notTimeDelay = (2.0 * 60.0);
-
-            if (standardUserDefaults) {
-                // read value
-                NSString* customNotTitlePersistent = [standardUserDefaults stringForKey:@"plot.notificationTitle"];
-
-                if(customNotTitlePersistent != nil && ![@"" isEqualToString:customNotTitlePersistent]){
-                    notTitle = [NSString stringWithFormat:@"%@ on %@", customNotTitlePersistent, trigger_direction];
-                    notText = [standardUserDefaults stringForKey:@"plot.notificationText"];
-
-                    //notification code to notify location change
-                    UNMutableNotificationContent* content = [[UNMutableNotificationContent alloc] init];
-                    content.title = [NSString localizedUserNotificationStringForKey:notTitle arguments:nil];
-                    content.body = [NSString localizedUserNotificationStringForKey:notText arguments:nil];
-
-                    // Configure the trigger after n*60 seconds
-                    UNTimeIntervalNotificationTrigger* trigger = [UNTimeIntervalNotificationTrigger
-                                 triggerWithTimeInterval:notTimeDelay repeats: NO];
-
-                    // Create the request object.
-                    UNNotificationRequest* request = [UNNotificationRequest
-                        requestWithIdentifier:@"plotproject.ema.notify" content:content trigger:trigger];
-
-                    UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
-                    [center addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {
-                        if (error != nil) {
-                           NSLog(@"PlotProjects - %@", error.localizedDescription);
-                        }
-
-                        NSLog(@"PlotProjects - notification scheduled");
-                    }];
-
-                    //[standardUserDefaults setDouble:receivedLocation.latitude forKey:@"current_latitude"];
-                    //[standardUserDefaults setDouble:receivedLocation.longitude forKey:@"current_longitude"];
-                    [standardUserDefaults setObject:[NSString stringWithFormat:@"%lu", (long)NSDate.date.timeIntervalSince1970] forKey:@"plot.surveyTriggered"];
-                    [standardUserDefaults synchronize];
-
-                    NSLog(@"PlotProjects - .fired event ComPlotprojectsTiModule");
-                }
-            }
+            [self sendEMANotification:trigger_direction geotrigger:geotrigger];
 
             break;
         }
     }
 
-
-    //PlotGeotriggerTriggerEnter
-    //PlotGeotriggerTriggerExit
-
-    //NSLog(@"PlotProjects - plotHandleGeotriggers %@ enter %@ exit %@", geotriggers, triggerEnter, triggerExit);
-
     if (plotInitCalled) {
         [self plotHandleGeotriggersAfterInit:geotriggers];
     } else {
         [geotriggersToHandleQueued addObject:geotriggers];
+    }
+}
+
+-(void)sendEMANotification:(NSString*)trigger_direction geotrigger:(PlotGeotrigger*)geotrigger {
+    NSUserDefaults *standardUserDefaults = [NSUserDefaults standardUserDefaults];
+    NSString *notTitle;
+    NSString *notText;
+    NSTimeInterval notTimeDelay = (2.0 * 60.0);
+
+    if (standardUserDefaults) {
+
+        NSString* customNotTitlePersistent = [standardUserDefaults stringForKey:@"plot.notificationTitle"];
+
+        if(customNotTitlePersistent != nil && ![@"" isEqualToString:customNotTitlePersistent]){
+            notTitle = [NSString stringWithFormat:@"%@ on %@", customNotTitlePersistent, trigger_direction];
+            notText = [standardUserDefaults stringForKey:@"plot.notificationText"];
+
+            //notification code to notify location change
+            UNMutableNotificationContent* content = [[UNMutableNotificationContent alloc] init];
+            content.title = [NSString localizedUserNotificationStringForKey:notTitle arguments:nil];
+            content.body = [NSString localizedUserNotificationStringForKey:notText arguments:nil];
+
+            // Configure the trigger after n*60 seconds
+            UNTimeIntervalNotificationTrigger* trigger = [UNTimeIntervalNotificationTrigger
+                         triggerWithTimeInterval:notTimeDelay repeats: NO];
+
+            // Create the request object.
+            UNNotificationRequest* request = [UNNotificationRequest
+                requestWithIdentifier:@"plotproject.ema.notify" content:content trigger:trigger];
+
+            UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
+            [center addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {
+                if (error != nil) {
+                   NSLog(@"PlotProjects - %@", error.localizedDescription);
+                }
+
+                NSLog(@"PlotProjects - notification scheduled");
+            }];
+
+            // detection_timestamp
+            // geotrigger_id
+            // geotrigger_name
+            // geotrigger_direction
+            NSString* trigger_id = [geotrigger.userInfo objectForKey:PlotGeotriggerIdentifier];
+            NSString* trigger_timestamp = [NSString stringWithFormat:@"%lu", (long)NSDate.date.timeIntervalSince1970];
+            NSString* trigger_name = [geotrigger.userInfo objectForKey:PlotGeotriggerName];
+
+            //[standardUserDefaults setObject:trigger_timestamp forKey:@"plot.surveyTriggered"];
+
+            NSDictionary *jsonDictionary = [NSDictionary dictionaryWithObjectsAndKeys:
+                                            trigger_id, @"geotrigger_id",
+                                            trigger_timestamp, @"detection_timestamp",
+                                            trigger_name, @"geotrigger_name",
+                                            trigger_direction, @"geotrigger_direction",
+                                            nil];
+
+
+            NSMutableArray * arr = [[NSMutableArray alloc] init];
+
+            [arr addObject:jsonDictionary];
+            NSData *jsonData2 = [NSJSONSerialization dataWithJSONObject:arr options:NSJSONWritingPrettyPrinted error:nil];
+            NSString *jsonString = [[NSString alloc] initWithData:jsonData2 encoding:NSUTF8StringEncoding];
+            NSLog(@"jsonData as string:\n%@", jsonString);
+
+            [standardUserDefaults setObject:jsonString forKey:@"plot.surveyTriggered"];
+
+            [standardUserDefaults synchronize];
+
+            NSLog(@"PlotProjects - .fired event ComPlotprojectsTiModule");
+        }
     }
 }
 
