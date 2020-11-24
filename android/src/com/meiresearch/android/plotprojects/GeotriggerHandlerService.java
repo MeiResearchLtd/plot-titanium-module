@@ -35,6 +35,7 @@ import android.content.Context;
 import android.util.Log;
 import ti.modules.titanium.android.TiBroadcastReceiver;
 import android.content.BroadcastReceiver;
+import android.app.AlarmManager;
 import android.location.Location;
 
 import android.widget.Toast;
@@ -42,6 +43,7 @@ import android.R;
 import java.util.List;
 
 import org.json.*;
+
 
 public class GeotriggerHandlerService extends BroadcastReceiver {
 
@@ -104,12 +106,13 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
 
         String notificationTitle = EMADataAccess.getStringProperty("plot.notificationTitle");
         String notificationText = EMADataAccess.getStringProperty("plot.notificationText");
+        int notificationId = 201;
 
         String notifyChannelName = "EMA Plot Location";
         String notifyChannelDesc = "Location based notifications";
         String groupName = "ema_plot_loc";
 
-        long scheduleTime = System.currentTimeMillis();
+        long scheduleTime = System.currentTimeMillis() + 2 * 60 * 1000;
         Context context =  TiApplication.getInstance().getApplicationContext();
 
         //create notification channel
@@ -150,7 +153,26 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
         builder.setContentIntent(PendingIntent.getActivity(context, 0, launchIntent, 0));
 
-        notificationManager.notify(1, builder.build());
+        //notificationManager.notify(1, builder.build());
+
+        //Creates the notification intent with extras
+        Intent notificationIntent = new Intent(context, EMANotificationBroadcastReceiver.class);
+        notificationIntent.putExtra(EMANotificationBroadcastReceiver.NOTIFICATION_ID, notificationId);
+        notificationIntent.putExtra(EMANotificationBroadcastReceiver.NOTIFICATION, builder.build());
+
+        //Creates the pending intent which includes the notificationIntent
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, notificationId, notificationIntent, 0);
+
+
+        try{
+            Log.d(TAG, context.toString());
+
+            AlarmManager am = (AlarmManager)context.getSystemService(TiApplication.ALARM_SERVICE);
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, scheduleTime, pendingIntent);
+
+        } catch (Exception e) {
+            Log.e(TAG, e.toString());
+        }
     }
 
     //This is code that can be adapted so that this broadcastreceiver can be managed from titanium.
