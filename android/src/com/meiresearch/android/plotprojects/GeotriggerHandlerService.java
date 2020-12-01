@@ -71,11 +71,11 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
                     Long tsLong = System.currentTimeMillis()/1000;
                     String ts = tsLong.toString();
 
-                    savePersistentData(ts, t.getName(), t.getId(), t.getTrigger());
-
-                    sendNotification();
-
-                    break;
+                    if(EMAFilterRegion.regionAllowed(t.getName())){
+                        savePersistentData(ts, t.getName(), t.getId(), t.getTrigger());
+                        sendNotification(t.getTrigger());
+                        break;
+                    }
                 }
 
                 batch.markGeotriggersHandled(triggers);
@@ -102,10 +102,10 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
         }
     }
 
-    private static void sendNotification(){
+    private static void sendNotification(String direction){
 
-        String notificationTitle = EMADataAccess.getStringProperty("plot.notificationTitle");
-        String notificationText = EMADataAccess.getStringProperty("plot.notificationText");
+        String notificationTitle = EMADataAccess.getStringProperty("plot.notificationTitle." + direction);
+        String notificationText = EMADataAccess.getStringProperty("plot.notificationText." + direction);
         int notificationId = 201;
 
         String notifyChannelName = "EMA Plot Location";
