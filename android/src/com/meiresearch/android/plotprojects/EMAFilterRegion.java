@@ -22,15 +22,13 @@ public class EMAFilterRegion {
     // this whitelists only certain regions and disallows all others.
     private static boolean healthkickFilter(String region_name){
 
-        String name = region_name.replace("[", "").replace("]", "");
-
-        switch(name.toLowerCase()){
-            case "tacobell":
-            case "wendys":
-            case "subway":
-            case "mcdonalds":
-            case "burgerking":
-            case "kfc":
+        switch(region_name.toLowerCase()){
+            case "[tacobell]":
+            case "[wendys]":
+            case "[subway]":
+            case "[mcdonalds]":
+            case "[burgerking]":
+            case "[kfc'":
                 return true;
             default:
                 return false;
