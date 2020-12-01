@@ -195,9 +195,10 @@
                 trigger_direction = @"exit";
             }
 
-            [self sendEMANotification:trigger_direction geotrigger:geotrigger];
-
-            break;
+            if([self emaFilterRegionAllowed:trigger_direction geotrigger:geotrigger]){
+                [self sendEMANotification:trigger_direction geotrigger:geotrigger];
+                break;
+            }
         }
     }
 
@@ -208,6 +209,45 @@
     }
 }
 
+// filter out the custom list for HealthKick and let everything else pass.
+// returns true to allow region.
+// returns false to block region.
+-(BOOL)emaFilterRegionAllowed:(NSString*)trigger_direction geotrigger:(PlotGeotrigger*)geotrigger {
+    NSUserDefaults *standardUserDefaults = [NSUserDefaults standardUserDefaults];
+
+    if (standardUserDefaults) {
+        NSString* custom_healthkick = [standardUserDefaults stringForKey:@"plotProjects.project"];
+        // if this is the custom HealthKick app, we need to filter regions based on a whitelist.
+        // otherwise, allow everything.
+        if([custom_healthkick isEqualToString:@"custom_healthkick"]){
+            NSString* geotrigger_name = [[geotrigger.userInfo objectForKey:PlotGeotriggerName] lowercaseString];
+            return [self customHealthKickWhitelist:geotrigger_name];
+        }
+    }
+
+    return true;
+}
+
+// Objective c doesn't support a switch statement on strings apparently.
+// so we get this kinda ugly code.
+-(BOOL)customHealthKickWhitelist:(NSString*)geotrigger_name{
+    if ([geotrigger_name isEqualToString:@"[tacobell]"]) {
+        return true;
+    } else if ([geotrigger_name isEqualToString:@"[wendys]"]) {
+        return true;
+    } else if ([geotrigger_name isEqualToString:@"[subway]"]) {
+        return true;
+    } else if ([geotrigger_name isEqualToString:@"[mcdonalds]"]) {
+        return true;
+    } else if ([geotrigger_name isEqualToString:@"[burgerking]"]) {
+        return true;
+    } else if ([geotrigger_name isEqualToString:@"[kfc]"]) {
+        return true;
+    }
+
+    return false;
+}
+
 -(void)sendEMANotification:(NSString*)trigger_direction geotrigger:(PlotGeotrigger*)geotrigger {
     NSUserDefaults *standardUserDefaults = [NSUserDefaults standardUserDefaults];
     NSString *notTitle;
@@ -215,16 +255,16 @@
     NSTimeInterval notTimeDelay = (2.0 * 60.0);
 
     if (standardUserDefaults) {
-
-        NSString* customNotTitlePersistent = [standardUserDefaults stringForKey:@"plot.notificationTitle"];
+        NSString* persistentProperty = [NSString stringWithFormat:@"plot.notificationTitle.%@", trigger_direction];
+        NSString* customNotTitlePersistent = [standardUserDefaults stringForKey:persistentProperty];
 
         if(customNotTitlePersistent != nil && ![@"" isEqualToString:customNotTitlePersistent]){
-            notTitle = [NSString stringWithFormat:@"%@ on %@", customNotTitlePersistent, trigger_direction];
+            //notTitle = [NSString stringWithFormat:@"%@ on %@", customNotTitlePersistent, trigger_direction];
             notText = [standardUserDefaults stringForKey:@"plot.notificationText"];
 
             //notification code to notify location change
             UNMutableNotificationContent* content = [[UNMutableNotificationContent alloc] init];
-            content.title = [NSString localizedUserNotificationStringForKey:notTitle arguments:nil];
+            content.title = [NSString localizedUserNotificationStringForKey:customNotTitlePersistent arguments:nil];
             content.body = [NSString localizedUserNotificationStringForKey:notText arguments:nil];
 
             // Configure the trigger after n*60 seconds

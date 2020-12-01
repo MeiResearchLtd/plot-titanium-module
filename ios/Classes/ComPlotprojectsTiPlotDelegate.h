@@ -46,5 +46,8 @@
 
 -(void)initCalled;
 -(void)sendEMANotification:(NSString*)trigger_direction geotrigger:(PlotGeotrigger*)geotrigger;
+-(BOOL)emaFilterRegionAllowed:(NSString*)trigger_direction geotrigger:(PlotGeotrigger*)geotrigger;
+-(BOOL)customHealthKickWhitelist:(NSString*)trigger_direction;
+
 
 @end
