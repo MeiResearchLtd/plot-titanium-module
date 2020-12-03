@@ -28,7 +28,7 @@ public class EMAFilterRegion {
             case "[subway]":
             case "[mcdonalds]":
             case "[burgerking]":
-            case "[kfc'":
+            case "[kfc]":
                 return true;
             default:
                 return false;
