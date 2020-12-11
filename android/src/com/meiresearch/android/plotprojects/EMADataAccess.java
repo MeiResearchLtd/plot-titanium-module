@@ -29,6 +29,7 @@ public class EMADataAccess {
     // this assumes all data is a string (json or otherwise).
     public static void saveStringProperty(String propName, String propVal){
         Log.i(TAG, "saveProperty: " + propName);
+        Log.i(TAG, "propValue:" + propVal);
         TiProperties props = TiApplication.getInstance().getAppProperties();
 
         props.setString(propName, propVal);
@@ -54,14 +55,23 @@ public class EMADataAccess {
         JSONArray json_ary = new JSONArray();
 
         try{
-            json_ary =  new JSONArray(json);
+            if(json != null && !json.trim().isEmpty()) {
+                json_ary =  new JSONArray(json);
+            } else {
+                json_ary =  new JSONArray();
+            }
+
             json_ary.put(elem);
 
             saveStringProperty(propertyName, json_ary.toString());
 
         } catch (JSONException e) {
+            Log.e(TAG, "appendToJsonArray error");
+            Log.e(TAG, propertyName);
+            Log.e(TAG, json);
             e.printStackTrace();
         }
+
         Log.d(TAG, "appendToJsonArray end");
     }
 
