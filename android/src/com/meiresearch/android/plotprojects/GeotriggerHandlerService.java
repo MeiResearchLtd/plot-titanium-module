@@ -70,9 +70,15 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
 
                     Long tsLong = System.currentTimeMillis()/1000;
                     String ts = tsLong.toString();
+                    String geofenceName = t.getName();
 
-                    if(EMAFilterRegion.regionAllowed(t.getName())){
-                        savePersistentData(ts, t.getName(), t.getId(), t.getTrigger());
+                    if(EMAFilterRegion.regionAllowed(geofenceName)){
+                        // for healthkick, we have to test regions and ensure consistent 'generic' naming of a region.
+                        if(geofenceName.indexOf("generic,") == 0){
+                            geofenceName = "generic";
+                        }
+
+                        savePersistentData(ts, geofenceName, t.getId(), t.getTrigger());
                         sendNotification(t.getTrigger());
                         break;
                     }
