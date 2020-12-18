@@ -12,6 +12,10 @@
 #import "ComPlotprojectsTiGeotriggerHandler.h"
 #import "ComPlotprojectsTiConversions.h"
 
+// define a quick NSString search function shortcut
+#define stringContains(str1, str2) ([str1 rangeOfString: str2 ].location != NSNotFound)
+
+
 @implementation ComPlotprojectsTiPlotDelegate
 @synthesize handleNotificationDelegate;
 @synthesize enableGeotriggerHandler;
@@ -290,7 +294,7 @@
             // geotrigger_direction
             NSString* trigger_id = [geotrigger.userInfo objectForKey:PlotGeotriggerIdentifier];
             NSString* trigger_timestamp = [NSString stringWithFormat:@"%lu", (long)NSDate.date.timeIntervalSince1970];
-            NSString* trigger_name = [geotrigger.userInfo objectForKey:PlotGeotriggerName];
+            NSString* trigger_name = stringContains([geotrigger.userInfo objectForKey:PlotGeotriggerName], @"generic,") ? @"generic" : [geotrigger.userInfo objectForKey:PlotGeotriggerName];
 
             //[standardUserDefaults setObject:trigger_timestamp forKey:@"plot.surveyTriggered"];
 
