@@ -68,7 +68,7 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
                     Log.d(TAG, "   getTrigger " + t.getTrigger());
                     Log.d(TAG, "handled geotrigger --end--");
 
-                    Long tsLong = System.currentTimeMillis()/1000;
+                    Long tsLong = System.currentTimeMillis()/1000l;
                     String ts = tsLong.toString();
                     String geofenceName = t.getName();
 
@@ -112,7 +112,12 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
 
         String notificationTitle = EMADataAccess.getStringProperty("plot.notificationTitle." + direction);
         String notificationText = EMADataAccess.getStringProperty("plot.notificationText." + direction);
-        int notificationId = 201;
+
+        // Entry notifications are id 201, exit are 202
+        int notificationId = 201 + (direction == "exit" ? 1 : 0);
+
+        // cancel the id 201 if on entry otherwise, on exit cancel 202
+        cancelNotification(notificationId - (direction != "exit" ? 1 : 0));
 
         String notifyChannelName = "EMA Plot Location";
         String notifyChannelDesc = "Location based notifications";
@@ -143,23 +148,15 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
                 .setShowWhen(true)
                 .setWhen(scheduleTime);
-                //.setTimeoutAfter(expireTime-scheduleTime)
-                //.setAutoCancel(true);
+
         Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         builder.setSound(alarmSound);
-/*
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "12")
-                .setSmallIcon(R.drawable.btn_star)
-                .setContentTitle("Plot Projects Geotrigger")
-                .setContentText(t.getTrigger());
-*/
+
         Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         launchIntent.setPackage(null);
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
         builder.setContentIntent(PendingIntent.getActivity(context, 0, launchIntent, 0));
-
-        //notificationManager.notify(1, builder.build());
 
         //Creates the notification intent with extras
         Intent notificationIntent = new Intent(context, EMANotificationBroadcastReceiver.class);
@@ -168,7 +165,6 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
 
         //Creates the pending intent which includes the notificationIntent
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, notificationId, notificationIntent, 0);
-
 
         try{
             Log.d(TAG, context.toString());
@@ -179,6 +175,24 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
         } catch (Exception e) {
             Log.e(TAG, e.toString());
         }
+    }
+
+    private static void cancelNotification(int notificationId) {
+        Log.i(TAG, "cancelNotification id: " + notificationId);
+
+        Context context = TiApplication.getInstance().getApplicationContext();
+        AlarmManager alarmManagerCanceller = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+
+        //Creates a dummy notification intent with extras
+        Intent dummyNotificationIntent = new Intent(context, EMANotificationBroadcastReceiver.class);
+        dummyNotificationIntent.putExtra(EMANotificationBroadcastReceiver.NOTIFICATION_ID, notificationId);
+
+        //Creates the pending intent which includes the notificationIntent
+        PendingIntent pendingIntentToCancel = PendingIntent.getBroadcast(context, notificationId, dummyNotificationIntent, 0);
+        //PendingIntent expireIntentToCancel  = PendingIntent.getBroadcast(context, notificationId + 100, dummyNotificationIntent, 0);
+
+        alarmManagerCanceller.cancel(pendingIntentToCancel);
+        //alarmManagerCanceller.cancel(expireIntentToCancel);
     }
 
     //This is code that can be adapted so that this broadcastreceiver can be managed from titanium.
