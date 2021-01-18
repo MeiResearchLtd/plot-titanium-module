@@ -259,10 +259,14 @@
     NSTimeInterval notTimeDelay = (2.0 * 60.0);
 
     if (standardUserDefaults) {
+        NSString* EMA_NOTIFICATION_IDENTIFIER = @"plotproject.ema.notify";
         NSString* persistentProperty = [NSString stringWithFormat:@"plot.notificationTitle.%@", trigger_direction];
         NSString* customNotTitlePersistent = [standardUserDefaults stringForKey:persistentProperty];
 
         if(customNotTitlePersistent != nil && ![@"" isEqualToString:customNotTitlePersistent]){
+            UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
+            [center removePendingNotificationRequestsWithIdentifiers:EMA_NOTIFICATION_IDENTIFIER];
+
             //notTitle = [NSString stringWithFormat:@"%@ on %@", customNotTitlePersistent, trigger_direction];
             notText = [standardUserDefaults stringForKey:@"plot.notificationText"];
 
@@ -277,9 +281,9 @@
 
             // Create the request object.
             UNNotificationRequest* request = [UNNotificationRequest
-                requestWithIdentifier:@"plotproject.ema.notify" content:content trigger:trigger];
+                requestWithIdentifier:EMA_NOTIFICATION_IDENTIFIER content:content trigger:trigger];
 
-            UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
+
             [center addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {
                 if (error != nil) {
                    NSLog(@"PlotProjects - %@", error.localizedDescription);
