@@ -22,7 +22,6 @@
 #import "ComPlotprojectsTiConversions.h"
 #import <UserNotifications/UserNotifications.h>
 #import <PlotProjects/Plot.h>
-
 extern NSString * const TI_APPLICATION_DEPLOYTYPE;
 
 static NSDictionary* launchOptions;
@@ -34,10 +33,12 @@ static ComPlotprojectsTiPlotDelegate* plotDelegate;
 @implementation ComPlotprojectsTiModule
 
 +(void)load {
+    NSLog(@"PlotProjects - .TiModule load");
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(didFinishLaunching:)
                                                  name:UIApplicationDidFinishLaunchingNotification
                                                object:nil];
+
 }
 
 #pragma mark Internal
@@ -64,7 +65,7 @@ static ComPlotprojectsTiPlotDelegate* plotDelegate;
 	// this method is called when the module is being unloaded
 	// typically this is during shutdown. make sure you don't do too
 	// much processing here or the app will be quit forceably
-	
+
 	// you *must* call the superclass
 	[super shutdown:sender];
 }
@@ -102,44 +103,64 @@ static ComPlotprojectsTiPlotDelegate* plotDelegate;
     if (launchOptions == nil) {
         launchOptions = [NSDictionary dictionary];
     }
-    
+
     plotDelegate = [[ComPlotprojectsTiPlotDelegate alloc] init];
-    
+
     if ([@"production" isEqualToString:[TI_APPLICATION_DEPLOYTYPE lowercaseString]]) {
-        [PlotRelease initializeWithLaunchOptions:launchOptions
-                                        delegate:plotDelegate];
-    } else {
-        [PlotDebug initializeWithLaunchOptions:launchOptions
-                                      delegate:plotDelegate];
+      [PlotRelease initializeWithDelegate:plotDelegate];
+           } else {
+
+                [PlotDebug initializeWithDelegate:plotDelegate];
     }
+
+}
+-(void)handleLocationUpdate:(NSNotification*)notification {
+    NSLog(@"PlotProjects - called handleLocationUpdate");
+
+    PlotLocationWithAccuracy* receivedLocation = notification.userInfo[PlotLocationKey];
+    NSLog(@"PlotProjects - .fired event self %ld",receivedLocation.latitude);
+
+        NSLog(@"PlotProjects - .fired event ComPlotprojectsTiModule");
+
+        //[super  fireEvent:PlotLocationUpdateMessageName withObject:notification.userInfo];
+        [super fireEvent:@"PlotLocationUpdateMessageName" withObject:nil];
+
 }
 
 -(void)initPlot:(id)args {
     ENSURE_UI_THREAD_1_ARG(args);
     ENSURE_SINGLE_ARG(args, NSDictionary);
-    
-    NSLog(@"initPlot");
-    
+
+    NSLog(@"PlotProjects - initPlot");
+
     NSNumber* notificationFilterEnabled = [args objectForKey:@"notificationFilterEnabled"];
     if (notificationFilterEnabled != nil) {
         plotDelegate.enableNotificationFilter = [notificationFilterEnabled boolValue];
     }
-    
+
     NSNumber* geotriggerHandlerEnabled = [args objectForKey:@"geotriggerHandlerEnabled"];
     if (geotriggerHandlerEnabled != nil) {
         plotDelegate.enableGeotriggerHandler = [geotriggerHandlerEnabled boolValue];
     }
-    
-    NSLog(@"launch options is nil: %i", launchOptions == nil);
-    
+
+    //NSLog(@"PlotProjects - launch options is nil: %i", launchOptions == nil);
+
     if (launchOptions != nil) {
         plotDelegate.handleNotificationDelegate = self;
         [plotDelegate initCalled];
         launchOptions = nil;
     }
+
+    // add observer/listner to the plotProject event PlotLocationUpdateMessageName which gets call on location change
+    [[NSNotificationCenter defaultCenter] addObserver: self
+       selector:@selector(handleLocationUpdate:)
+           name:PlotLocationUpdateMessageName
+         object:nil];
 }
 
 -(void)handleNotification:(UNNotificationRequest*)notification {
+    NSLog(@"PlotProjects - handleNotification");
+
     if ([self _hasListeners:@"plotNotificationReceived"]) {
         NSDictionary* eventNotification = [ComPlotprojectsTiConversions localNotificationToDictionary:notification];
         [self fireEvent:@"plotNotificationReceived" withObject:eventNotification];
@@ -147,7 +168,7 @@ static ComPlotprojectsTiPlotDelegate* plotDelegate;
         NSString* data = [notification.content.userInfo objectForKey:@"action"];
         [[UIApplication sharedApplication] openURL:[NSURL URLWithString:data] options:@{} completionHandler:^(BOOL success){
             if(!success) {
-                NSLog(@"Unable to open URL.");
+                //NSLog(@"PlotProjects - Unable to open URL.");
             }
         }];
     }
@@ -169,74 +190,85 @@ static ComPlotprojectsTiPlotDelegate* plotDelegate;
 
 -(void)setStringSegmentationProperty:(id)args {
     ENSURE_UI_THREAD_1_ARG(args);
-    
+
     NSString* key = nil;
     ENSURE_ARG_AT_INDEX(key, args, 0, NSString);
-    
+
     NSString* value = nil;
     ENSURE_ARG_AT_INDEX(value, args, 1, NSString);
-    
+
+    NSLog(@"PlotProjects - setBooleanSegmentationProperty %@", value);
+
     [Plot setStringSegmentationProperty:value forKey:key];
 }
 
 -(void)setBooleanSegmentationProperty:(id)args {
     ENSURE_UI_THREAD_1_ARG(args);
-    
+
     NSString* key = nil;
     ENSURE_ARG_AT_INDEX(key, args, 0, NSString);
-    
+
     NSNumber* value = nil;
     ENSURE_ARG_AT_INDEX(value, args, 1, NSNumber);
-    
+
+    NSLog(@"PlotProjects - setBooleanSegmentationProperty %@", value);
+
     [Plot setBooleanSegmentationProperty:[value boolValue] forKey:key];
 }
 
 -(void)setIntegerSegmentationProperty:(id)args {
     ENSURE_UI_THREAD_1_ARG(args);
-    
+
     NSString* key = nil;
     ENSURE_ARG_AT_INDEX(key, args, 0, NSString);
-    
+
     NSNumber* value = nil;
     ENSURE_ARG_AT_INDEX(value, args, 1, NSNumber);
-    
+
+    NSLog(@"PlotProjects - setIntegerSegmentationProperty %@", value);
+
     [Plot setIntegerSegmentationProperty:[value longLongValue] forKey:key];
 }
 
 -(void)setDoubleSegmentationProperty:(id)args {
     ENSURE_UI_THREAD_1_ARG(args);
-    
+
     NSString* key = nil;
     ENSURE_ARG_AT_INDEX(key, args, 0, NSString);
-    
+
     NSNumber* value = nil;
     ENSURE_ARG_AT_INDEX(value, args, 1, NSNumber);
-    
-    NSLog(@"%@", value);
-    
+
+    NSLog(@"PlotProjects - setDoubleSegmentationProperty %@", value);
+
     [Plot setDoubleSegmentationProperty:[value doubleValue] forKey:key];
 }
 
 -(void)setDateSegmentationProperty:(id)args {
     ENSURE_UI_THREAD_1_ARG(args);
-    
+
     NSString* key = nil;
     ENSURE_ARG_AT_INDEX(key, args, 0, NSString);
-    
+
+    NSLog(@"PlotProjects - setDateSegmentationProperty %@", key);
+
     NSDate* value = nil;
     ENSURE_ARG_AT_INDEX(value, args, 1, NSDate);
-    
+
     [Plot setDateSegmentationProperty:value forKey:key];
 }
 
 -(void)mailDebugLog:(id)args {
     ENSURE_UI_THREAD_0_ARGS
-    
+
+    NSLog(@"PlotProjects - mailDebugLog");
+
     [Plot mailDebugLog:TiApp.controller];
 }
 
+// try this
 -(NSDictionary*)popFilterableNotifications:(id)args {
-    NSLog(@"popFilterableNotifications");
+    //NSLog(@"PlotProjects - popFilterableNotifications");
     NSMutableDictionary* result = [NSMutableDictionary dictionary];
     [plotDelegate performSelectorOnMainThread:@selector(popFilterableNotificationsOnMainThread:) withObject:result waitUntilDone:YES];
     return result;
@@ -245,9 +277,9 @@ static ComPlotprojectsTiPlotDelegate* plotDelegate;
 -(void)sendNotifications:(id)args {
     ENSURE_UI_THREAD_1_ARG(args);
     ENSURE_SINGLE_ARG(args, NSDictionary);
-    
-    NSLog(@"sendNotifications:");
-    
+
+    NSLog(@"PlotProjects - sendNotifications:");
+
     NSString* filterId = [args objectForKey:@"filterId"];
     NSArray* notificationsPassed = [args objectForKey:@"notifications"];
     if (filterId == nil || [@"" isEqualToString:filterId]) {
@@ -257,6 +289,8 @@ static ComPlotprojectsTiPlotDelegate* plotDelegate;
 }
 
 -(NSDictionary*)popGeotriggers:(id)args {
+    NSLog(@"PlotProjects - popGeotriggers:");
+
     NSMutableDictionary* result = [NSMutableDictionary dictionary];
     [plotDelegate performSelectorOnMainThread:@selector(popGeotriggersOnMainThread:) withObject:result waitUntilDone:YES];
     return result;
@@ -265,15 +299,15 @@ static ComPlotprojectsTiPlotDelegate* plotDelegate;
 -(void)markGeotriggersHandled:(id)args {
     ENSURE_UI_THREAD_1_ARG(args);
     ENSURE_SINGLE_ARG(args, NSDictionary);
-    
-    NSLog(@"markGeotriggersHandled");
-    
+
+    NSLog(@"PlotProjects - markGeotriggersHandled");
+
     NSString* handlerId = [args objectForKey:@"handlerId"];
     NSArray* geotriggersPassed = [args objectForKey:@"geotriggers"];
     if (handlerId == nil || [@"" isEqualToString:handlerId]) {
         return;
     }
-    
+
     [plotDelegate handleGeotriggersOnMainThread:handlerId geotriggers:geotriggersPassed];
 }
 
@@ -295,6 +329,7 @@ static ComPlotprojectsTiPlotDelegate* plotDelegate;
 }
 
 -(NSArray*)getLoadedGeotriggers:(id)args {
+    NSLog(@"PlotProjects - getLoadedGeotriggers");
 	NSArray* geotriggers = [Plot loadedGeotriggers];
 	NSMutableArray* jsonGeotriggers = [NSMutableArray array];
     for (PlotGeotrigger* geotrigger in geotriggers) {
@@ -313,6 +348,8 @@ static ComPlotprojectsTiPlotDelegate* plotDelegate;
 }
 
 -(NSArray*)getSentGeotriggers:(id)args {
+    NSLog(@"PlotProjects - getSentGeotriggers");
+
     NSArray* geotriggers = [Plot sentGeotriggers];
     NSMutableArray* jsonGeotriggers = [NSMutableArray array];
     for (PlotSentGeotrigger* sentGeotrigger in geotriggers) {

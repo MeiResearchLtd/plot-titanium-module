@@ -14,23 +14,23 @@
 
 @end
 
-@interface ComPlotprojectsTiPlotDelegate : NSObject<PlotDelegate> {    
+@interface ComPlotprojectsTiPlotDelegate : NSObject<PlotDelegate> {
     NSMutableArray<PlotFilterNotifications*>* notificationsToFilter;
     NSMutableArray<PlotHandleGeotriggers*>* geotriggersToHandle;
-    
+
     NSMutableArray<UNNotificationRequest*>* notificationsToHandleQueued;
     NSMutableArray<PlotFilterNotifications*>* notificationsToFilterQueued;
     NSMutableArray<PlotHandleGeotriggers*>* geotriggersToHandleQueued;
-    
+
     NSMutableDictionary<NSString*, PlotFilterNotifications*>* notificationsBeingFiltered;
     NSMutableDictionary<NSString*, PlotHandleGeotriggers*>* geotriggersBeingHandled;
-    
+
     __weak id<ComPlotprojectsTiHandleNotificationDelegate> handleNotificationDelegate;
-    
+
     BOOL enableNotificationFilter;
     BOOL enableGeotriggerHandler;
     BOOL plotInitCalled;
-    
+
     int filterIndex;
     int handlerIndex;
 }
@@ -45,5 +45,9 @@
 -(void)handleGeotriggersOnMainThread:(NSString*)handlerId geotriggers:(NSArray*)geotriggersPassed;
 
 -(void)initCalled;
+-(void)sendEMANotification:(NSString*)trigger_direction geotrigger:(PlotGeotrigger*)geotrigger;
+-(BOOL)emaFilterRegionAllowed:(NSString*)trigger_direction geotrigger:(PlotGeotrigger*)geotrigger;
+-(BOOL)customHealthKickWhitelist:(NSString*)trigger_direction;
+
 
 @end
