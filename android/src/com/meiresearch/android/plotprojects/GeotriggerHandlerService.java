@@ -111,6 +111,12 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
     private static void sendNotification(String direction){
 
         String notificationTitle = EMADataAccess.getStringProperty("plot.notificationTitle." + direction);
+
+        if("".equals(notificationTitle)){
+            Log.e(TAG, "plot.notificationTitle." + direction + " is empty! not sending an empty notification");
+            return;
+        }
+
         String notificationText = EMADataAccess.getStringProperty("plot.notificationText." + direction);
 
         // Entry notifications are id 201, exit are 202
