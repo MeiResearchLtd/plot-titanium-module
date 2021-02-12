@@ -10,6 +10,10 @@ public class EMAFilterRegion {
     public static boolean regionAllowed(String region_name){
         String pp_val = EMADataAccess.getStringProperty("plotProjects.project");
 
+        if(region_name.toLowerCase().indexOf("generic,") == 0){
+            return true;
+        }
+
         if(pp_val.equals(custom_healthkick)){
             return healthkickFilter(region_name);
         }

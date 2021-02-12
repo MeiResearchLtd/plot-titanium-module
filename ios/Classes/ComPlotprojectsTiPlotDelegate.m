@@ -217,6 +217,12 @@
 // returns true to allow region.
 // returns false to block region.
 -(BOOL)emaFilterRegionAllowed:(NSString*)trigger_direction geotrigger:(PlotGeotrigger*)geotrigger {
+    NSString* geotrigger_name = [[geotrigger.userInfo objectForKey:PlotGeotriggerName] lowercaseString];
+
+    if ([geotrigger_name rangeOfString:@"generic,"].location != NSNotFound) {
+        return true;
+    }
+
     NSUserDefaults *standardUserDefaults = [NSUserDefaults standardUserDefaults];
 
     if (standardUserDefaults) {
@@ -224,7 +230,7 @@
         // if this is the custom HealthKick app, we need to filter regions based on a whitelist.
         // otherwise, allow everything.
         if([custom_healthkick isEqualToString:@"custom_healthkick"]){
-            NSString* geotrigger_name = [[geotrigger.userInfo objectForKey:PlotGeotriggerName] lowercaseString];
+
             return [self customHealthKickWhitelist:geotrigger_name];
         }
     }
