@@ -122,8 +122,9 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
         // Entry notifications are id 201, exit are 202
         int notificationId = 201 + (direction == "exit" ? 1 : 0);
 
+        // for latest testing this might be a bad thing to have - removing for now.
         // cancel the id 201 if on entry otherwise, on exit cancel 202
-        cancelNotification(notificationId - (direction != "exit" ? 1 : 0));
+        //cancelNotification(notificationId - (direction != "exit" ? 1 : 0));
 
         String notifyChannelName = "EMA Plot Location";
         String notifyChannelDesc = "Location based notifications";

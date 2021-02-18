@@ -54,6 +54,8 @@ public class EMADataAccess {
         String json = props.getString(propertyName, "[]");
         JSONArray json_ary = new JSONArray();
 
+        boolean errord = false;
+
         try{
             if(json != null && !json.trim().isEmpty()) {
                 json_ary =  new JSONArray(json);
@@ -62,14 +64,22 @@ public class EMADataAccess {
             }
 
             json_ary.put(elem);
-
             saveStringProperty(propertyName, json_ary.toString());
 
         } catch (JSONException e) {
-            Log.e(TAG, "appendToJsonArray error");
+            Log.e(TAG, "appendToJsonArray error 1:");
             Log.e(TAG, propertyName);
             Log.e(TAG, json);
             e.printStackTrace();
+
+            errord = true;
+        }
+
+        // if the last json persistent property errors, let's just create it fresh.
+        if(errord == true){
+            json_ary =  new JSONArray();
+            json_ary.put(elem);
+            saveStringProperty(propertyName, json_ary.toString());
         }
 
         Log.d(TAG, "appendToJsonArray end");

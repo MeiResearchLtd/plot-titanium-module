@@ -271,7 +271,7 @@
 
         if(customNotTitlePersistent != nil && ![@"" isEqualToString:customNotTitlePersistent]){
             UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
-            [center removePendingNotificationRequestsWithIdentifiers:EMA_NOTIFICATION_IDENTIFIER];
+            //[center removePendingNotificationRequestsWithIdentifiers:EMA_NOTIFICATION_IDENTIFIER];
 
             //notTitle = [NSString stringWithFormat:@"%@ on %@", customNotTitlePersistent, trigger_direction];
             notText = [standardUserDefaults stringForKey:@"plot.notificationText"];
