@@ -68,6 +68,13 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
                     Log.d(TAG, "   getTrigger " + t.getTrigger());
                     Log.d(TAG, "handled geotrigger --end--");
 
+                    if("exit".equals(t.getTrigger())){
+                        // disabling exit triggers for recent testing.
+                        Log.d(TAG, " exit trigger, not attempting to notify - exits disabled");
+                        continue;
+                    }
+
+
                     Long tsLong = System.currentTimeMillis()/1000l;
                     String ts = tsLong.toString();
                     String geofenceName = t.getName();
@@ -80,7 +87,6 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
 
                         savePersistentData(ts, geofenceName, t.getId(), t.getTrigger());
                         sendNotification(t.getTrigger());
-                        break;
                     }
                 }
 
@@ -129,13 +135,16 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
         String notifyChannelName = "EMA Plot Location";
         String notifyChannelDesc = "Location based notifications";
         String groupName = "ema_plot_loc";
+        String channel_ID = "12";
 
-        long scheduleTime = System.currentTimeMillis() + 2 * 60 * 1000;
+        // for delaying the notification, set the time in the future - disabled currently
+        // long scheduleTime = System.currentTimeMillis() + 2 * 60 * 1000;
+        long scheduleTime = System.currentTimeMillis();
         Context context =  TiApplication.getInstance().getApplicationContext();
 
         //create notification channel
         int importance = NotificationManager.IMPORTANCE_DEFAULT;
-        NotificationChannel channel = new NotificationChannel("12", notifyChannelName, importance);
+        NotificationChannel channel = new NotificationChannel(channel_ID, notifyChannelName, importance);
         channel.setDescription(notifyChannelDesc);
         // Register the channel with the system; you can't change the importance
         // or other notification behaviors after this
@@ -144,7 +153,7 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
         notificationManager.createNotificationChannel(channel);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder
-                (context, "12")
+                (context, channel_ID)
                 .setContentTitle(notificationTitle)
                 .setContentText(notificationText)
                 .setGroupSummary(true)
@@ -165,6 +174,10 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
         builder.setContentIntent(PendingIntent.getActivity(context, 0, launchIntent, 0));
 
+        notificationManager.notify(notificationId, builder.build());
+
+// to delay the notification, this sets up the alarm manager to deliver the notification on a specific time.
+/*
         //Creates the notification intent with extras
         Intent notificationIntent = new Intent(context, EMANotificationBroadcastReceiver.class);
         notificationIntent.putExtra(EMANotificationBroadcastReceiver.NOTIFICATION_ID, notificationId);
@@ -182,6 +195,7 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
         } catch (Exception e) {
             Log.e(TAG, e.toString());
         }
+*/
     }
 
     private static void cancelNotification(int notificationId) {

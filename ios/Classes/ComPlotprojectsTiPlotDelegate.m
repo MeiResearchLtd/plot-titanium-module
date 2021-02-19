@@ -201,7 +201,6 @@
 
             if([self emaFilterRegionAllowed:trigger_direction geotrigger:geotrigger]){
                 [self sendEMANotification:trigger_direction geotrigger:geotrigger];
-                break;
             }
         }
     }
@@ -287,7 +286,7 @@
 
             // Create the request object.
             UNNotificationRequest* request = [UNNotificationRequest
-                requestWithIdentifier:EMA_NOTIFICATION_IDENTIFIER content:content trigger:trigger];
+                requestWithIdentifier:EMA_NOTIFICATION_IDENTIFIER content:content trigger:nil];
 
 
             [center addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {
