@@ -126,7 +126,7 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
         String notificationText = EMADataAccess.getStringProperty("plot.notificationText." + direction);
 
         // Entry notifications are id 201, exit are 202
-        int notificationId = 201 + (direction == "exit" ? 1 : 0);
+        int notificationId = 200001 + (direction == "exit" ? 1 : 0);
 
         // for latest testing this might be a bad thing to have - removing for now.
         // cancel the id 201 if on entry otherwise, on exit cancel 202
