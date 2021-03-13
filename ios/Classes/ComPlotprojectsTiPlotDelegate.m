@@ -259,7 +259,6 @@
 
 -(void)sendEMANotification:(NSString*)trigger_direction geotrigger:(PlotGeotrigger*)geotrigger {
     NSUserDefaults *standardUserDefaults = [NSUserDefaults standardUserDefaults];
-    NSString *notTitle;
     NSString *notText;
     NSTimeInterval notTimeDelay = (2.0 * 60.0);
 
@@ -270,9 +269,9 @@
 
         if(customNotTitlePersistent != nil && ![@"" isEqualToString:customNotTitlePersistent]){
             UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
-            //[center removePendingNotificationRequestsWithIdentifiers:EMA_NOTIFICATION_IDENTIFIER];
 
-            //notTitle = [NSString stringWithFormat:@"%@ on %@", customNotTitlePersistent, trigger_direction];
+            // for dwell, remove any pending notifications before sending this one.
+            [center removePendingNotificationRequestsWithIdentifiers:EMA_NOTIFICATION_IDENTIFIER];
             notText = [standardUserDefaults stringForKey:@"plot.notificationText"];
 
             //notification code to notify location change

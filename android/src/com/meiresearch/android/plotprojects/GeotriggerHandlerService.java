@@ -68,12 +68,12 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
                     Log.d(TAG, "   getTrigger " + t.getTrigger());
                     Log.d(TAG, "handled geotrigger --end--");
 
-                    if("exit".equals(t.getTrigger())){
-                        // disabling exit triggers for recent testing.
-                        Log.d(TAG, " exit trigger, not attempting to notify - exits disabled");
-                        continue;
-                    }
-
+                    // enabling Dwell again. uncomment to disable Dwell feature.
+                    // if("exit".equals(t.getTrigger())){
+                    //     // disabling exit triggers for recent testing.
+                    //     Log.d(TAG, " exit trigger, not attempting to notify - exits disabled");
+                    //     continue;
+                    // }
 
                     Long tsLong = System.currentTimeMillis()/1000l;
                     String ts = tsLong.toString();
@@ -174,10 +174,11 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
         builder.setContentIntent(PendingIntent.getActivity(context, 0, launchIntent, 0));
 
-        notificationManager.notify(notificationId, builder.build());
+        // send the notification immediately? only if Dwell isn't needed.
+        // notificationManager.notify(notificationId, builder.build());
 
+// Dwell:
 // to delay the notification, this sets up the alarm manager to deliver the notification on a specific time.
-/*
         //Creates the notification intent with extras
         Intent notificationIntent = new Intent(context, EMANotificationBroadcastReceiver.class);
         notificationIntent.putExtra(EMANotificationBroadcastReceiver.NOTIFICATION_ID, notificationId);
@@ -193,9 +194,9 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
             am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, scheduleTime, pendingIntent);
 
         } catch (Exception e) {
+            Log.e(TAG, "setting alarm manager for dwell notification for a geotrigger failed.");
             Log.e(TAG, e.toString());
         }
-*/
     }
 
     private static void cancelNotification(int notificationId) {
