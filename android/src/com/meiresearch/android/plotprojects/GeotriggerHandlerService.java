@@ -138,8 +138,7 @@ public class GeotriggerHandlerService extends BroadcastReceiver {
         String channel_ID = "12";
 
         // for delaying the notification, set the time in the future - disabled currently
-        // long scheduleTime = System.currentTimeMillis() + 2 * 60 * 1000;
-        long scheduleTime = System.currentTimeMillis();
+        long scheduleTime = System.currentTimeMillis() + 2 * 60 * 1000;
         Context context =  TiApplication.getInstance().getApplicationContext();
 
         //create notification channel
