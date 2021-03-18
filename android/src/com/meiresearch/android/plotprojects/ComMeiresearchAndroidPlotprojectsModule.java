@@ -18,63 +18,96 @@ import org.appcelerator.titanium.TiApplication;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Collection;
+import java.util.ArrayList;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+
+import com.plotprojects.retail.android.NotificationTrigger;
+import com.plotprojects.retail.android.FilterableNotification;
+import com.plotprojects.retail.android.Geotrigger;
+import com.plotprojects.retail.android.OpenUriReceiver;
+import com.plotprojects.retail.android.Plot;
+import com.plotprojects.retail.android.PlotConfiguration;
+import com.meiresearch.android.plotprojects.GeotriggerBatches.GeotriggersAndId;
+
 
 
 @Kroll.module(name="ComMeiresearchAndroidPlotprojects", id="com.meiresearch.android.plotprojects")
-public final class ComMeiresearchAndroidPlotprojectsModule extends KrollModule
-{
-    @Kroll.getProperty
-	public boolean getIsRunning()
+public class ComMeiresearchAndroidPlotprojectsModule extends KrollModule
 	{
-		return (LocationForegroundService.getInstance() != null);
-	}
 
 	// Standard Debugging variables
-	// private static final String TAG = "ComMeiresearchAndroidPlotprojectsModule";
+	private static final String LCAT = "ComMeiresearchAndroidPlotprojectsModule";
+	private static final boolean DBG = TiConfig.LOGD;
+
+	private static Boolean isEnabled = false;
+	private static String version = "0.00.00";
+	private static Boolean isGeoTriggerHandlerEnabled = false;
 
 	// You can define constants with @Kroll.constant, for example:
 	// @Kroll.constant public static final String EXTERNAL_NAME = value;
-    //
-	// public ComMeiresearchAndroidPlotprojectsModule()
-	// {
-	// 	super();
-	// }
 
-	// Methods
-    @Kroll.method
-	public boolean start()
+	public ComMeiresearchAndroidPlotprojectsModule()
 	{
-		return LocationForegroundService.start();
+		super();
 	}
 
+	@Kroll.onAppCreate
+	public static void onAppCreate(TiApplication app)
+	{
+		Log.d(LCAT, "onAppCreate");
+	}
+
+	// Methods
 	@Kroll.method
 	public void initPlot() {
-		LocationForegroundService.initPlot();
+		// put module init code that needs to run when the application is created
+		TiApplication appContext = TiApplication.getInstance();
+
+		Activity activity = appContext.getCurrentActivity();
+
+		SettingsUtil.setGeotriggerHandlerEnabled(true);
+		Plot.init(activity);
+
+		isEnabled = Plot.isEnabled();
+		isGeoTriggerHandlerEnabled = SettingsUtil.isGeotriggerHandlerEnabled();
+		version = Plot.getVersion();
+
+
+		Log.d(LCAT, "Plot Version is - " + version);
+		Log.d(LCAT, "Is Plot Enabled? - " + isEnabled.toString());
+		Log.d(LCAT, "Is GeotriggerHandler Enabled? - " + isGeoTriggerHandlerEnabled.toString());
 	}
 
 	@Kroll.method
 	public void enable() {
-		LocationForegroundService.enable();
+		Plot.enable();
 	}
 
 	@Kroll.method
 	public void disable() {
-		LocationForegroundService.disable();
+		Plot.disable();
 	}
 
 	@Kroll.getProperty @Kroll.method
 	public boolean getEnabled() {
-		return LocationForegroundService.isEnabled();
+		return Plot.isEnabled();
 	}
+
 
 	@Kroll.getProperty @Kroll.method
 	public String getVersion() {
-		return LocationForegroundService.getVersion();
+		return Plot.getVersion();
 	}
 
 	@Kroll.method
 	public void mailDebugLog() {
-		LocationForegroundService.mailDebugLog();
+		Plot.mailDebugLog();
 	}
 
 //	@Kroll.method
@@ -89,71 +122,96 @@ public final class ComMeiresearchAndroidPlotprojectsModule extends KrollModule
 
 	@Kroll.method
 	public void sendNotifications(HashMap batch) {
-        LocationForegroundService.sendNotifications(batch);
+		Log.d(LCAT, "sendNotifications");
+		String filterId = (String) batch.get("filterId");
+		List<FilterableNotification> notifications = NotificationBatches.getBatch(filterId);
+
+		Object[] jsonNotifications = (Object[]) batch.get("notifications");
+		List<FilterableNotification> notificationsToSend = JsonUtil.getNotifications(jsonNotifications, notifications);
+		NotificationBatches.sendBatch(filterId, notificationsToSend);
 	}
 
 	@Kroll.method
 	public HashMap popGeotriggers() {
-        return LocationForegroundService.popGeotriggers();
+		GeotriggersAndId geotriggersAndId = GeotriggerBatches.popBatch();
+
+		HashMap<String, Object> result = new HashMap<String, Object>();
+		result.put("handlerId", geotriggersAndId.getId());
+		result.put("geotriggers", JsonUtil.geotriggersToMap(geotriggersAndId.getGeotriggers()));
+		return result;
 	}
 
 	@Kroll.method
 	public void markGeotriggersHandled(HashMap batch) {
-        LocationForegroundService.markGeotriggersHandled(batch);
+		Log.d(LCAT, "markGeotriggersHandled - A");
+
+		String handlerId = (String) batch.get("handlerId");
+		List<Geotrigger> geotriggers = GeotriggerBatches.getBatch(handlerId);
+
+		Log.d(LCAT, "markGeotriggersHandled - B");
+
+		Object[] jsonGeotriggers = (Object[]) batch.get("geotriggers");
+		List<Geotrigger> geotriggersHandled = JsonUtil.getGeotriggers(jsonGeotriggers, geotriggers);
+		GeotriggerBatches.sendBatch(handlerId, geotriggersHandled);
+
+		Log.d(LCAT, "markGeotriggersHandled - C");
 	}
 
 	@Kroll.method
 	public void setStringSegmentationProperty(String property, String value) {
-		LocationForegroundService.setStringSegmentationProperty(property, value);
+		Plot.setStringSegmentationProperty(property, value);
 	}
 
 	@Kroll.method
 	public void setBooleanSegmentationProperty(String property, boolean value) {
-		LocationForegroundService.setBooleanSegmentationProperty(property, value);
+		Plot.setBooleanSegmentationProperty(property, value);
 	}
 
 	@Kroll.method
 	public void setIntegerSegmentationProperty(String property, int value) {
-		LocationForegroundService.setIntegerSegmentationProperty(property, value);
+		Plot.setLongSegmentationProperty(property, value);
 	}
 
 	@Kroll.method
 	public void setDoubleSegmentationProperty(String property, double value) {
-		LocationForegroundService.setDoubleSegmentationProperty(property, value);
+		Plot.setDoubleSegmentationProperty(property, value);
 	}
 
 	@Kroll.method
 	public void setDateSegmentationProperty(String property, Date value) {
-		LocationForegroundService.setDateSegmentationProperty(property, value);
+		Plot.setDateSegmentationProperty(property, value.getTime() / 1000);
 	}
 
 	@Kroll.getProperty @Kroll.method
 	public HashMap[] getLoadedNotifications() {
-		return LocationForegroundService.getLoadedNotifications();
+		return JsonUtil.notificationTriggersToMap(new ArrayList(Plot.getLoadedNotifications()));
 	}
 
 	@Kroll.getProperty @Kroll.method
 	public HashMap[] getLoadedGeotriggers() {
-		return LocationForegroundService.getLoadedGeotriggers();
+		Log.d(LCAT, "getLoadedGeotriggers");
+		return JsonUtil.geotriggersToMap(new ArrayList(Plot.getLoadedGeotriggers()));
 	}
 
 	@Kroll.getProperty @Kroll.method
 	public HashMap[] getSentNotifications() {
-		return LocationForegroundService.getSentNotifications();
+		return JsonUtil.sentNotificationsToMap(new ArrayList(Plot.getSentNotifications()));
 	}
 
 	@Kroll.getProperty @Kroll.method
 	public HashMap[] getSentGeotriggers() {
-		return LocationForegroundService.getSentGeotriggers();
+		Log.d(LCAT, "getSentGeotriggers");
+		return JsonUtil.sentGeotriggersToMap(new ArrayList(Plot.getSentGeotriggers()));
 	}
 
 	@Kroll.method
 	public void clearSentNotifications() {
-		LocationForegroundService.clearSentNotifications();
+		Plot.clearSentNotifications();
 	}
 
 	@Kroll.method
 	public void clearSentGeotriggers() {
-		LocationForegroundService.clearSentGeotriggers();
+		Plot.clearSentGeotriggers();
 	}
 }
+

@@ -11,7 +11,6 @@
             <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
             <uses-permission android:name="alarm.permission.SET_ALARM"/>
 			<application>
-                <service android:name="com.meiresearch.android.plotprojects.LocationForegroundService"/>
                 <receiver android:name=".GeotriggerHandlerService" android:exported="false">
     				<intent-filter>
     					<action android:name="${applicationId}.plot.HandleGeotriggers" />
