@@ -26,16 +26,32 @@ public class EMAFilterRegion {
     // this whitelists only certain regions and disallows all others.
     private static boolean healthkickFilter(String region_name){
 
-        switch(region_name.toLowerCase()){
-            case "[tacobell]":
-            case "[wendys]":
-            case "[subway]":
-            case "[mcdonalds]":
-            case "[burgerking]":
-            case "[kfc]":
-                return true;
-            default:
-                return false;
+        if(region_name.toLowerCase().contains("tacobell")){
+            return true;
+        } else if(region_name.toLowerCase().contains("wendys")){
+            return true;
+        } else if(region_name.toLowerCase().contains("subway")){
+            return true;
+        } else if(region_name.toLowerCase().contains("mcdonalds")){
+            return true;
+        } else if(region_name.toLowerCase().contains("burgerking")){
+            return true;
+        } else if(region_name.toLowerCase().contains("kfc")){
+            return true;
         }
+
+        return false;
+
+        // switch(region_name.toLowerCase()){
+        //     case "[tacobell]":
+        //     case "[wendys]":
+        //     case "[subway]":
+        //     case "[mcdonalds]":
+        //     case "[burgerking]":
+        //     case "[kfc]":
+        //         return true;
+        //     default:
+        //         return false;
+        // }
     }
 }
