@@ -260,7 +260,7 @@
 -(void)sendEMANotification:(NSString*)trigger_direction geotrigger:(PlotGeotrigger*)geotrigger {
     NSUserDefaults *standardUserDefaults = [NSUserDefaults standardUserDefaults];
     NSString *notText;
-    NSTimeInterval notTimeDelay = (2.0 * 60.0);
+    // NSTimeInterval notTimeDelay = (2.0 * 60.0);
 
     if (standardUserDefaults) {
         NSString* EMA_NOTIFICATION_IDENTIFIER = @"plotproject.ema.notify";
@@ -271,7 +271,7 @@
             UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
 
             // for dwell, remove any pending notifications before sending this one.
-            [center removePendingNotificationRequestsWithIdentifiers:EMA_NOTIFICATION_IDENTIFIER];
+            // [center removePendingNotificationRequestsWithIdentifiers:EMA_NOTIFICATION_IDENTIFIER];
             notText = [standardUserDefaults stringForKey:@"plot.notificationText"];
 
             //notification code to notify location change
@@ -280,8 +280,8 @@
             content.body = [NSString localizedUserNotificationStringForKey:notText arguments:nil];
 
             // Configure the trigger after n*60 seconds
-            UNTimeIntervalNotificationTrigger* trigger = [UNTimeIntervalNotificationTrigger
-                         triggerWithTimeInterval:notTimeDelay repeats: NO];
+            // UNTimeIntervalNotificationTrigger* trigger = [UNTimeIntervalNotificationTrigger
+                         // triggerWithTimeInterval:notTimeDelay repeats: NO];
 
             // Create the request object.
             UNNotificationRequest* request = [UNNotificationRequest
