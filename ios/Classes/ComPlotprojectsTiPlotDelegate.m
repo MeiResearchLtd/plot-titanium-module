@@ -279,6 +279,7 @@
 
     if (standardUserDefaults) {
         NSString* EMA_NOTIFICATION_IDENTIFIER = @"plotproject.ema.notify";
+        // NSArray* PENDING_NOTIFICATION_IDS = [NSArray arrayWithObjects:EMA_NOTIFICATION_IDENTIFIER];
         NSString* persistentProperty = [NSString stringWithFormat:@"plot.notificationTitle.%@", trigger_direction];
         NSString* customNotTitlePersistent = [standardUserDefaults stringForKey:persistentProperty];
 
@@ -286,7 +287,7 @@
             UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
 
             // for dwell, remove any pending notifications before sending this one.
-            [center removePendingNotificationRequestsWithIdentifiers:EMA_NOTIFICATION_IDENTIFIER];
+            // [center removePendingNotificationRequestsWithIdentifiers:PENDING_NOTIFICATION_IDS];
             notText = [standardUserDefaults stringForKey:@"plot.notificationText"];
 
             //notification code to notify location change
@@ -300,7 +301,7 @@
 
             // Create the request object.
             UNNotificationRequest* request = [UNNotificationRequest
-                requestWithIdentifier:EMA_NOTIFICATION_IDENTIFIER content:content trigger:nil];
+                requestWithIdentifier:EMA_NOTIFICATION_IDENTIFIER content:content trigger:trigger];
 
 
             [center addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {

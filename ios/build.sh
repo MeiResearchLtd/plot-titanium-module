@@ -3,7 +3,7 @@
 echo '[mei] Building iOS Plot Projects module via Titanium SDK'
 
 
-TI_SDK_VERSION="9.1.0.GA"
+TI_SDK_VERSION="9.3.2.GA"
 NODE_VERSION=10
 
 echo '[mei] selecting node version via `n`'
