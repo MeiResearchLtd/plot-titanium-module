@@ -240,19 +240,34 @@
 // Objective c doesn't support a switch statement on strings apparently.
 // so we get this kinda ugly code.
 -(BOOL)customHealthKickWhitelist:(NSString*)geotrigger_name{
-    if ([geotrigger_name isEqualToString:@"[tacobell]"]) {
+
+    if ([geotrigger_name rangeOfString:@"tacobell" options:NSCaseInsensitiveSearch].location != NSNotFound){
         return true;
-    } else if ([geotrigger_name isEqualToString:@"[wendys]"]) {
+    } else if ([geotrigger_name rangeOfString:@"wendys" options:NSCaseInsensitiveSearch].location != NSNotFound){
         return true;
-    } else if ([geotrigger_name isEqualToString:@"[subway]"]) {
+    }  else if ([geotrigger_name rangeOfString:@"subway" options:NSCaseInsensitiveSearch].location != NSNotFound){
         return true;
-    } else if ([geotrigger_name isEqualToString:@"[mcdonalds]"]) {
+    }  else if ([geotrigger_name rangeOfString:@"mcdonalds" options:NSCaseInsensitiveSearch].location != NSNotFound){
         return true;
-    } else if ([geotrigger_name isEqualToString:@"[burgerking]"]) {
+    }  else if ([geotrigger_name rangeOfString:@"burgerking" options:NSCaseInsensitiveSearch].location != NSNotFound){
         return true;
-    } else if ([geotrigger_name isEqualToString:@"[kfc]"]) {
+    }  else if ([geotrigger_name rangeOfString:@"kfc" options:NSCaseInsensitiveSearch].location != NSNotFound){
         return true;
     }
+
+    // if ([geotrigger_name isEqualToString:@"[tacobell]"]) {
+    //     return true;
+    // } else if ([geotrigger_name isEqualToString:@"[wendys]"]) {
+    //     return true;
+    // } else if ([geotrigger_name isEqualToString:@"[subway]"]) {
+    //     return true;
+    // } else if ([geotrigger_name isEqualToString:@"[mcdonalds]"]) {
+    //     return true;
+    // } else if ([geotrigger_name isEqualToString:@"[burgerking]"]) {
+    //     return true;
+    // } else if ([geotrigger_name isEqualToString:@"[kfc]"]) {
+    //     return true;
+    // }
 
     return false;
 }
@@ -264,6 +279,7 @@
 
     if (standardUserDefaults) {
         NSString* EMA_NOTIFICATION_IDENTIFIER = @"plotproject.ema.notify";
+        // NSArray* PENDING_NOTIFICATION_IDS = [NSArray arrayWithObjects:EMA_NOTIFICATION_IDENTIFIER];
         NSString* persistentProperty = [NSString stringWithFormat:@"plot.notificationTitle.%@", trigger_direction];
         NSString* customNotTitlePersistent = [standardUserDefaults stringForKey:persistentProperty];
 
@@ -271,7 +287,7 @@
             UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
 
             // for dwell, remove any pending notifications before sending this one.
-            // [center removePendingNotificationRequestsWithIdentifiers:EMA_NOTIFICATION_IDENTIFIER];
+            // [center removePendingNotificationRequestsWithIdentifiers:PENDING_NOTIFICATION_IDS];
             notText = [standardUserDefaults stringForKey:@"plot.notificationText"];
 
             //notification code to notify location change
