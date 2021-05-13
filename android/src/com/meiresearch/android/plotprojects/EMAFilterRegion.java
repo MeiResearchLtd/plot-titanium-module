@@ -14,6 +14,11 @@ public class EMAFilterRegion {
             return true;
         }
 
+        // disallow the TestGrid from messing up the normal operation of the module until we figure it out.
+        if(region_name.toLowerCase().indexOf("testgrid") >= 0){
+            return false;
+        }
+
         if(pp_val.equals(custom_healthkick)){
             return healthkickFilter(region_name);
         }
