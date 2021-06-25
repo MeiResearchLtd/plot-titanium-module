@@ -23,6 +23,10 @@ import java.util.Map;
 import java.util.Collection;
 import java.util.ArrayList;
 
+import java.io.OutputStreamWriter;
+import java.io.File;
+import java.io.IOException;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -109,6 +113,46 @@ public class ComMeiresearchAndroidPlotprojectsModule extends KrollModule
 	public void mailDebugLog() {
 		Plot.mailDebugLog();
 	}
+
+    @Kroll.method
+    public void androidCleanupPlotDebugLog(){
+        TiApplication appContext = TiApplication.getInstance();
+        erasePlotProjectLogFile(appContext.getApplicationInfo().dataDir + "/files");
+    }
+
+    private void erasePlotProjectLogFile(String path){
+
+        long MAX_ALLOWED_PLOT_DEBUG_LOG_SIZE = 1024 * 1024 * 2;
+
+        File f = new File(path);
+        File[] files = f.listFiles();
+        for (File inFile : files) {
+            if (!inFile.isDirectory() && inFile.getName().contains("plot") && inFile.getName().contains(".log")){
+
+                if(inFile.length() > MAX_ALLOWED_PLOT_DEBUG_LOG_SIZE){
+                    Log.w(LCAT, "found a large plot debug log, cleaning up!");
+                    Log.w(LCAT, inFile.getAbsolutePath());
+                    Log.w(LCAT, String.valueOf(inFile.length()));
+                    Log.w(LCAT, "end of plot log file");
+
+                    eraseFile(inFile.getName());
+                }
+            }
+        }
+    }
+
+    private void eraseFile(String filename) {
+        TiApplication appContext = TiApplication.getInstance();
+
+        try {
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(appContext.openFileOutput(filename, Context.MODE_PRIVATE));
+            outputStreamWriter.write("");
+            outputStreamWriter.close();
+        }
+        catch (IOException e) {
+            Log.e("Exception", "File write failed: " + e.toString());
+        }
+    }
 
 //	@Kroll.method
 //	public HashMap popFilterableNotifications() {
@@ -214,4 +258,3 @@ public class ComMeiresearchAndroidPlotprojectsModule extends KrollModule
 		Plot.clearSentGeotriggers();
 	}
 }
-
