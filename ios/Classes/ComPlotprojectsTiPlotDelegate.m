@@ -222,6 +222,11 @@
         return true;
     }
 
+    // disallow the TestGrid from causing issues until we fully integrate with it
+    if ([geotrigger_name rangeOfString:@"TestGrid"].location != NSNotFound) {
+        return false;
+    }
+
     NSUserDefaults *standardUserDefaults = [NSUserDefaults standardUserDefaults];
 
     if (standardUserDefaults) {
@@ -294,6 +299,7 @@
             UNMutableNotificationContent* content = [[UNMutableNotificationContent alloc] init];
             content.title = [NSString localizedUserNotificationStringForKey:customNotTitlePersistent arguments:nil];
             content.body = [NSString localizedUserNotificationStringForKey:notText arguments:nil];
+            content.sound = [UNNotificationSound defaultSound];
 
             // Configure the trigger after n*60 seconds
             // UNTimeIntervalNotificationTrigger* trigger = [UNTimeIntervalNotificationTrigger
