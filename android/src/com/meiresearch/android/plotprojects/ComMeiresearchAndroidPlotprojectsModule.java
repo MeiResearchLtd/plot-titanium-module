@@ -25,7 +25,9 @@ import java.util.ArrayList;
 
 import java.io.OutputStreamWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 
 import android.app.Activity;
 import android.content.Context;
@@ -122,7 +124,8 @@ public class ComMeiresearchAndroidPlotprojectsModule extends KrollModule
 
     private void erasePlotProjectLogFile(String path){
 
-        long MAX_ALLOWED_PLOT_DEBUG_LOG_SIZE = 1024 * 1024 * 2;
+        // TODO: cut the file contents and leave the end of the file + MAX_ALLOWED_PLOT_DEBUG_LOG_SIZE bytes
+        int MAX_ALLOWED_PLOT_DEBUG_LOG_SIZE = 1024 * 1024 * 5;
 
         File f = new File(path);
         File[] files = f.listFiles();
@@ -135,22 +138,53 @@ public class ComMeiresearchAndroidPlotprojectsModule extends KrollModule
                     Log.w(LCAT, String.valueOf(inFile.length()));
                     Log.w(LCAT, "end of plot log file");
 
-                    eraseFile(inFile.getName());
+                    truncateFile(inFile.getName(), MAX_ALLOWED_PLOT_DEBUG_LOG_SIZE+1);
                 }
             }
         }
     }
 
-    private void eraseFile(String filename) {
-        TiApplication appContext = TiApplication.getInstance();
+    private void truncateFile(String filename, int trimToSize) {
+        // TiApplication appContext = TiApplication.getInstance();
+
+        // try {
+        //     OutputStreamWriter outputStreamWriter = new OutputStreamWriter(appContext.openFileOutput(filename, Context.MODE_PRIVATE));
+        //     outputStreamWriter.write("");
+        //     outputStreamWriter.close();
+        // }
+        // catch (IOException e) {
+        //     Log.e("Exception", "File write failed: " + e.toString());
+        // }
+
+        // copy the last n bytes to the beginning of the file, then truncate the rest.
+        // this requires less memory than reading the entire file in-memory just to dump it back.
+        RandomAccessFile raf = null;
+        try{
+            raf = new RandomAccessFile(filename, "rw");
+        }catch(FileNotFoundException e){
+            Log.e(LCAT, "filename not found:", filename);
+            return;
+        }
+
+
+        for (int i = 1; i*1024 < trimToSize; i++) {
+            try {
+                byte[] b = new byte[1024];
+                raf.read(b, (int)raf.length() - i * 1024, b.length);
+                raf.seek(raf.length());
+                raf.write(b, (int)raf.length() - trimToSize + (i-1)* 1024, b.length);
+            } catch (IOException e) {
+                Log.e(LCAT, "RandomAccessFile read,seek,write exception");
+                Log.e(LCAT, e.toString());
+                return;
+            }
+        }
 
         try {
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(appContext.openFileOutput(filename, Context.MODE_PRIVATE));
-            outputStreamWriter.write("");
-            outputStreamWriter.close();
-        }
-        catch (IOException e) {
-            Log.e("Exception", "File write failed: " + e.toString());
+            raf.close();
+        } catch (IOException e) {
+            Log.e(LCAT, "RandomAccessFile close exception");
+            Log.e(LCAT, e.toString());
         }
     }
 
